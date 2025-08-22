@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    container_name: extera_fans_bot
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
