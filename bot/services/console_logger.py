@@ -29,6 +29,12 @@ def log_application_approved(admin_name: str, user_id: int):
     print(f"{Colors.BRIGHT_GREEN}│{Colors.RESET} Админ: {Colors.BOLD}{admin_name}{Colors.RESET}", flush=True)
     print(f"{Colors.BRIGHT_GREEN}╰─> {Colors.RESET}Одобрен пользователь с ID: {Colors.YELLOW}{user_id}{Colors.RESET}", flush=True)
 
+def log_application_declined(admin_name: str, user_id: int, reason: str):
+    _print_header("❌ Заявка отклонена", Colors.BRIGHT_RED)
+    print(f"{Colors.BRIGHT_RED}│{Colors.RESET} Админ: {Colors.BOLD}{admin_name}{Colors.RESET}", flush=True)
+    print(f"{Colors.BRIGHT_RED}│{Colors.RESET} Отклонен пользователь с ID: {Colors.YELLOW}{user_id}{Colors.RESET}", flush=True)
+    print(f"{Colors.BRIGHT_RED}╰─> {Colors.RESET}Причина: {Colors.YELLOW}{reason}{Colors.RESET}", flush=True)
+
 def log_user_banned(admin_name: str, target_id: int, reason: str):
     _print_header("🚫 Пользователь забанен", Colors.BRIGHT_RED)
     print(f"{Colors.BRIGHT_RED}│{Colors.RESET} Админ: {Colors.BOLD}{admin_name}{Colors.RESET}", flush=True)
@@ -49,7 +55,26 @@ def log_content_updated(admin_name: str):
     _print_header("📝 Контент обновлен", Colors.BLUE)
     print(f"{Colors.BLUE}╰─> {Colors.RESET}Админ {Colors.BOLD}{admin_name}{Colors.RESET} изменил основной текст поста.", flush=True)
 
+
 def log_bot_start(token_loaded: bool, admins: list, channel_id: int):
+    logo = r"""
++═════════════════════════════════════════════════════════════════════════+
+║      ███▄ ▄███▓ ██ ▄█▀ █    ██  ██▓    ▄▄▄█████▓ ██▀███   ▄▄▄           ║
+║     ▓██▒▀█▀ ██▒ ██▄█▒  ██  ▓██▒▓██▒    ▓  ██▒ ▓▒▓██ ▒ ██▒▒████▄         ║
+║     ▓██    ▓██░▓███▄░ ▓██  ▒██░▒██░    ▒ ▓██░ ▒░▓██ ░▄█ ▒▒██  ▀█▄       ║
+║     ▒██    ▒██ ▓██ █▄ ▓▓█  ░██░▒██░    ░ ▓██▓ ░ ▒██▀▀█▄  ░██▄▄▄▄██      ║
+║     ▒██▒   ░██▒▒██▒ █▄▒▒█████▓ ░██████▒  ▒██▒ ░ ░██▓ ▒██▒ ▓█   ▓██▒     ║
+║     ░ ▒░   ░  ░▒ ▒▒ ▓▒░▒▓▒ ▒ ▒ ░ ▒░▓  ░  ▒ ░░   ░ ▒▓ ░▒▓░ ▒▒   ▓▒█░     ║
+║     ░  ░      ░░ ░▒ ▒░░░▒░ ░ ░ ░ ░ ▒  ░    ░      ░▒ ░ ▒░  ▒   ▒▒ ░     ║
+║     ░      ░   ░ ░░ ░  ░░░ ░ ░   ░ ░     ░        ░░   ░   ░   ▒        ║
+║            ░   ░  ░      ░         ░  ░            ░           ░  ░     ║
+║                                                                         ║
++═════════════════════════════════════════════════════════════════════════+
+║                               MKultra69                                 ║
++═════════════════════════════════════════════════════════════════════════+
+"""
+    print(f"{Colors.BRIGHT_MAGENTA}{logo}{Colors.RESET}")
+
     _print_header("🚀 Бот успешно запущен", Colors.BRIGHT_GREEN)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"{Colors.BRIGHT_GREEN}│{Colors.RESET} Время запуска: {Colors.YELLOW}{timestamp}{Colors.RESET}", flush=True)

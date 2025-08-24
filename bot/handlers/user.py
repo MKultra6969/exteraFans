@@ -68,7 +68,10 @@ async def handle_user_application(message: Message, bot: Bot):
         await message.reply(f"❌ **Неверный формат заявки.**\nПосле вашего `@username` слишком много символов ({len(text_after)}/25).")
         return
 
-    PENDING_APPLICATIONS[user_id] = text
+    PENDING_APPLICATIONS[user_id] = {
+        "text": text,
+        "admin_messages": []
+    }
 
     console_logger.log_new_application(message.from_user.full_name, user_id)
 
@@ -81,11 +84,14 @@ async def handle_user_application(message: Message, bot: Bot):
 
     for admin_id in ADMINS:
         try:
-            await bot.send_message(
+            sent_message = await bot.send_message(
                 chat_id=admin_id,
                 text=admin_message_text,
                 reply_markup=admin_keyboard,
                 parse_mode="Markdown"
+            )
+            PENDING_APPLICATIONS[user_id]["admin_messages"].append(
+                (admin_id, sent_message.message_id)
             )
         except Exception as e:
             print(f"Не удалось отправить сообщение админу {admin_id}: {e}")

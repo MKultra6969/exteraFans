@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual envs
+venv/
+.venv/
+env/
+
+# Env vars
+.env
+
+# Data
+data/banned_users.json
+data/fans.json
+data/posts.json
+data/content.txt
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# System
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+*.tmp
+
+# Custom
+2FIX.txt
+*.jpg
+structureGen.py

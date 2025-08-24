@@ -21,6 +21,24 @@ admin_router = Router()
 admin_router.message.filter(AdminFilter())
 admin_router.callback_query.filter(AdminFilter())
 
+async def _update_all_admin_messages(bot: Bot, user_id: int, new_text: str):
+    app_data = PENDING_APPLICATIONS.get(user_id)
+    if not app_data or not app_data.get("admin_messages"):
+        return
+
+    for chat_id, message_id in app_data["admin_messages"]:
+        try:
+            await bot.edit_message_text(
+                text=new_text,
+                chat_id=chat_id,
+                message_id=message_id,
+                reply_markup=None,
+                parse_mode="Markdown"
+            )
+        except TelegramBadRequest as e:
+            if "message to edit not found" in str(e):
+                continue
+            print(f"Не удалось отредактировать сообщение {message_id} в чате {chat_id}: {e}")
 
 @admin_router.message(Command("help"))
 async def admin_help_command(message: Message):
@@ -47,30 +65,42 @@ async def admin_help_command(message: Message):
 async def handle_approve_callback(callback: CallbackQuery, bot: Bot):
     user_id = int(callback.data.split(":")[1])
 
-    original_text = PENDING_APPLICATIONS.get(user_id)
-    if not original_text:
+    # ИЗМЕНЕНИЕ: Получаем данные заявки, а не только текст
+    app_data = PENDING_APPLICATIONS.get(user_id)
+    if not app_data:
         await callback.message.edit_text(
             f"{callback.message.text}\n\n⚠️ **Ошибка:** Заявка не найдена (возможно, бот перезапускался). Попросите пользователя отправить ее повторно.")
         await callback.answer("⚠️ Заявка не найдена", show_alert=True)
         return
 
-    PENDING_APPLICATIONS.pop(user_id, None)
+    original_text = app_data["text"]
     storage.add_fan(original_text)
 
     success, error = await channel_service.update_channel_post(bot)
 
     if not success:
         await callback.answer(f"⚠️ Ошибка при обновлении канала: {error}", show_alert=True)
-        await callback.message.edit_text(
-            f"{callback.message.text}\n\n✅ **Одобрено (локально)** админом {callback.from_user.full_name}\n"
+        final_text = (
+            f"{callback.message.text.split('Текст заявки:')[0]}"
+            f"Текст заявки:\n`{original_text}`\n\n"
+            f"✅ **Одобрено (локально)** админом {callback.from_user.full_name}\n"
             f"❗️ **НО:** Не удалось обновить пост в канале. Ошибка: {error}"
         )
+        await _update_all_admin_messages(bot, user_id, final_text)
+        PENDING_APPLICATIONS.pop(user_id, None)
         return
 
     console_logger.log_application_approved(callback.from_user.full_name, user_id)
 
-    await callback.message.edit_text(
-        f"{callback.message.text}\n\n✅ **Одобрено** админом {callback.from_user.full_name}")
+    final_text = (
+        f"{callback.message.text.split('Текст заявки:')[0]}"
+        f"Текст заявки:\n`{original_text}`\n\n"
+        f"✅ **Одобрено** админом {callback.from_user.full_name}"
+    )
+    await _update_all_admin_messages(bot, user_id, final_text)
+
+    PENDING_APPLICATIONS.pop(user_id, None)
+
     try:
         await bot.send_message(user_id, "✅ Ваша заявка была одобрена и добавлена в список!")
     except Exception as e:
@@ -87,10 +117,14 @@ async def handle_decline_callback(callback: CallbackQuery, state: FSMContext):
         await callback.answer("⚠️ Заявка не найдена", show_alert=True)
         return
 
-    await state.update_data(user_to_notify=user_id)
+    await state.update_data(
+        user_to_notify=user_id,
+        original_admin_message_text=callback.message.text
+    )
     await state.set_state(AdminDeclineState.waiting_for_reason)
     await callback.message.edit_text(f"{callback.message.text}\n\n✍️ **Введите причину отказа...** (можно отменить командой /cancel)")
     await callback.answer("Введите причину отказа")
+
 
 
 @admin_router.message(Command("cancel"))
@@ -107,6 +141,16 @@ async def handle_decline_reason(message: Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     user_id = data.get("user_to_notify")
     reason = message.text
+    original_admin_message_text = data.get("original_admin_message_text")
+
+    console_logger.log_application_declined(message.from_user.full_name, user_id, reason)
+
+    final_text = (
+        f"{original_admin_message_text}\n\n"
+        f"❌ **Отклонено** админом {message.from_user.full_name}\n"
+        f"**Причина:** {reason}"
+    )
+    await _update_all_admin_messages(bot, user_id, final_text)
 
     PENDING_APPLICATIONS.pop(user_id, None)
 
