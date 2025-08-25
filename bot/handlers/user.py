@@ -13,12 +13,19 @@ PENDING_APPLICATIONS = {}
 
 USERNAME_REGEX = re.compile(r'(@[a-zA-Z0-9_]{5,32})')
 
+def escape_markdown_v2(text: str) -> str:
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    return ''.join(f'\\{char}' if char in escape_chars else char for char in text)
+
 @user_router.message(CommandStart(), F.chat.type == "private")
 @user_router.message(Command("help"), F.chat.type == "private")
 async def command_start_handler(message: Message):
+
+    safe_full_name = escape_markdown_v2(message.from_user.full_name)
+
     start_text = (
-        f"👋 **Привет, {message.from_user.full_name}!**\n\n"
-        "Это бот для подачи заявок на добавление в **exteraFans**.\n\n"
+        f"👋 **Привет, {safe_full_name}\\!**\n\n" # Обрати внимание на \!
+        "Это бот для подачи заявок на добавление в **exteraFans**\.\n\n" # И на \.
         "Чтобы подать заявку, просто отправь мне сообщение в следующем формате:\n\n"
         "```\n"
         "Текст твоей заявки @твой_username доп. инфо\n"
@@ -26,11 +33,11 @@ async def command_start_handler(message: Message):
         "**Пример:**\n"
         "`Legend: @mkultra6969 чпокает всех в рот`\n\n"
         "**Важные правила:**\n"
-        "1. В сообщении обязательно должен быть твой `@username`.\n"
-        "2. Текст после юзернейма не должен превышать 25 символов.\n"
-        "3. Без жести (заявка будет отклонена автоматически)."
+        "1\. В сообщении обязательно должен быть твой `@username`\.\n"
+        "2\. Текст после юзернейма не должен превышать 25 символов\.\n"
+        "3\. Без жести \\(заявка будет отклонена автоматически\\)\."
     )
-    await message.answer(start_text, parse_mode="Markdown")
+    await message.answer(start_text, parse_mode="MarkdownV2")
 
 @user_router.message(F.text, ~F.text.startswith('/'), F.chat.type == "private")
 @user_router.edited_message(F.text, ~F.text.startswith('/'), F.chat.type == "private")
