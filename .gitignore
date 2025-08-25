@@ -17,6 +17,7 @@ data/banned_users.json
 data/fans.json
 data/posts.json
 data/content.txt
+data/guide.txt
 
 # IDE
 .idea/

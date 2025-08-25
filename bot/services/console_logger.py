@@ -55,6 +55,10 @@ def log_content_updated(admin_name: str):
     _print_header("📝 Контент обновлен", Colors.BLUE)
     print(f"{Colors.BLUE}╰─> {Colors.RESET}Админ {Colors.BOLD}{admin_name}{Colors.RESET} изменил основной текст поста.", flush=True)
 
+def log_guide_updated(admin_name: str):
+    _print_header("ℹ️ Инструкция обновлена", Colors.CYAN)
+    print(f"{Colors.CYAN}╰─> {Colors.RESET}Админ {Colors.BOLD}{admin_name}{Colors.RESET} изменил инструкцию для пользователей.", flush=True)
+
 
 def log_bot_start(token_loaded: bool, admins: list, channel_id: int):
     logo = r"""

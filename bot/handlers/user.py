@@ -6,6 +6,7 @@ from aiogram.types import Message
 from bot.config import ADMINS
 from bot.services import filters, storage, console_logger
 from bot.keyboards import inline
+import html
 
 user_router = Router()
 
@@ -20,24 +21,22 @@ def escape_markdown_v2(text: str) -> str:
 @user_router.message(CommandStart(), F.chat.type == "private")
 @user_router.message(Command("help"), F.chat.type == "private")
 async def command_start_handler(message: Message):
+    safe_full_name = html.escape(message.from_user.full_name)
+    await message.answer(f"👋 <b>Привет, {safe_full_name}!</b>", parse_mode="HTML")
 
-    safe_full_name = escape_markdown_v2(message.from_user.full_name)
-
-    start_text = (
-        f"👋 **Привет, {safe_full_name}\\!**\n\n" # Обрати внимание на \!
-        "Это бот для подачи заявок на добавление в **exteraFans**\.\n\n" # И на \.
-        "Чтобы подать заявку, просто отправь мне сообщение в следующем формате:\n\n"
-        "```\n"
-        "Текст твоей заявки @твой_username доп. инфо\n"
-        "```\n\n"
-        "**Пример:**\n"
-        "`Legend: @mkultra6969 чпокает всех в рот`\n\n"
-        "**Важные правила:**\n"
-        "1\. В сообщении обязательно должен быть твой `@username`\.\n"
-        "2\. Текст после юзернейма не должен превышать 25 символов\.\n"
-        "3\. Без жести \\(заявка будет отклонена автоматически\\)\."
-    )
-    await message.answer(start_text, parse_mode="MarkdownV2")
+    guide_text = storage.get_guide_text()
+    if guide_text:
+        await message.answer(guide_text, parse_mode="HTML", disable_web_page_preview=True)
+    else:
+        default_guide = (
+            "<b>Как подать заявку:</b>\n\n"
+            "Отправь мне сообщение в формате:\n"
+            "<pre>Текст твоей заявки @твой_username доп. инфо</pre>\n\n"
+            "<b>Пример:</b>\n"
+            "<code>Legend: @mkultra6969 чпокает всех в рот</code>\n\n"
+            "Заявка будет отправлена на рассмотрение."
+        )
+        await message.answer(default_guide, parse_mode="HTML")
 
 @user_router.message(F.text, ~F.text.startswith('/'), F.chat.type == "private")
 @user_router.edited_message(F.text, ~F.text.startswith('/'), F.chat.type == "private")

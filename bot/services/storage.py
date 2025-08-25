@@ -6,6 +6,20 @@ POSTS_FILE = "data/posts.json"
 BANWORDS_FILE = "data/banwords.json"
 CONTENT_FILE = "data/content.txt"
 BANNED_USERS_FILE = "data/banned_users.json"
+GUIDE_FILE = "data/guide.txt"
+
+def set_guide_text(text: str):
+    with open(GUIDE_FILE, 'w', encoding='utf-8') as f:
+        f.write(text)
+
+def get_guide_text() -> str | None:
+    try:
+        with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
+            text = f.read().strip()
+            return text if text else None
+    except FileNotFoundError:
+        open(GUIDE_FILE, 'w').close()
+        return None
 
 def _read_json(file_path: str, default_type: type = list):
     try:

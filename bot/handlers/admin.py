@@ -8,7 +8,7 @@ from aiogram.exceptions import TelegramBadRequest
 from bot.config import ADMINS, CHANNEL_ID
 from bot.services import storage, builder, channel_service, console_logger
 from bot.handlers.user import PENDING_APPLICATIONS
-
+import html
 
 class AdminFilter(BaseFilter):
     async def __call__(self, event: Message | CallbackQuery) -> bool:
@@ -44,7 +44,11 @@ async def _update_all_admin_messages(bot: Bot, user_id: int, new_text: str):
 async def admin_help_command(message: Message):
     admin_help_text = (
         "**Админ-панель | Доступные команды**\n\n"
-        "**Управление контентом поста:**\n"
+        "**Управление инструкцией для пользователей (HTML-разметка):**\n"
+        "• `/setguide [текст]` — Устанавливает текст инструкции, который видят пользователи после `/start`.\n"
+        "• `/getguide` — Показывает текущий текст инструкции.\n"
+        "• `/delguide` — Удаляет текст инструкции.\n\n"
+        "**Управление контентом поста в канале (HTML-разметка):**\n"
         "• `/setcontent [текст]` — Устанавливает основной, редактируемый текст поста.\n"
         "• `/getcontent` — Показывает текущий текст для удобного копирования.\n"
         "• `/delcontent` — Полностью удаляет основной текст.\n\n"
@@ -328,3 +332,42 @@ async def banlist_command(message: Message):
             await message.answer(text[i:i + 4096])
     else:
         await message.reply(text)
+
+@admin_router.message(Command("setguide"))
+@admin_router.edited_message(Command("setguide"))
+async def set_guide_command(message: Message):
+    if message.entities and message.entities[0].type == "bot_command":
+        command_len = message.entities[0].length
+        guide_text = message.html_text[command_len:].strip()
+    else:
+        guide_text = message.html_text.replace("/setguide", "", 1).strip()
+
+    if not guide_text:
+        await message.reply(
+            "Неверный формат. Используйте: `/setguide Ваш текст...`\n"
+            "Текст может быть многострочным и содержать HTML-форматирование."
+        )
+        return
+
+    storage.set_guide_text(guide_text)
+    console_logger.log_guide_updated(message.from_user.full_name)
+    await message.reply("✅ Инструкция для пользователей сохранена.")
+
+
+@admin_router.message(Command("getguide"))
+async def get_guide_command(message: Message):
+    guide = storage.get_guide_text()
+    if guide:
+        await message.answer("Текущий текст инструкции:")
+        await message.answer(guide, parse_mode="HTML")
+        await message.answer("Для копирования:")
+        await message.answer(f"<code>{html.escape(guide)}</code>", parse_mode="HTML")
+    else:
+        await message.answer("Инструкция для пользователей пока не задана.")
+
+
+@admin_router.message(Command("delguide"))
+async def delete_guide_command(message: Message):
+    storage.set_guide_text("")
+    console_logger.log_guide_updated(message.from_user.full_name)
+    await message.reply("✅ Инструкция для пользователей удалена.")
